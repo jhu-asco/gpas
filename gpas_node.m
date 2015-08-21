@@ -182,16 +182,19 @@ xss = [reshape(X, 1, size(X,1)*size(X,2));
 
 
 % sequence of measured (unprocessed) states and current state
-global odomData envData
+global odomData envData startCmd
+startCmd = [];
 odomData = [];
 envData.xs = [];
 envData.fs = [];
 
 % setup ROS node
 rosshutdown
+setenv('ROS_MASTER_URI','http://172.16.177.182:11311')
+setenv('ROS_IP','172.16.177.1')
 rosinit
 
-odomSub = rossubscriber('/odom', rostype.nav_msgs_Odometry, ...
+odomSub = rossubscriber('/odometry/filtered', rostype.nav_msgs_Odometry, ...
                         @odomCallback)
 
 % wait for valid odom data
@@ -207,7 +210,15 @@ while isempty(envData.xs)
   pause(.01);
 end
 
-cmdPub = rospublisher('/cmd', rostype.nav_msgs_Path)
+startSub = rossubscriber('/adp_start', rostype.std_msgs_Bool, ...
+                        @startCallback)
+                    
+% wait for start command
+while isempty(startCmd)
+  pause(1);
+end               
+
+cmdPub = rospublisher('/adp_path', rostype.nav_msgs_Path)
 cmdMsg = rosmessage(cmdPub)
 
 
@@ -287,8 +298,15 @@ ys = y;
 cs = c;
 
 
+
 for k=1:opt.stages
   
+    % wait for start command
+    while isempty(startCmd)
+        pause(1);
+    end   
+    
+    
   %% PLANNING
   opt.ce.C = .5*opt.ce.C + .5*opt.ce.C0;
   subplot(2,3,1);
@@ -418,6 +436,17 @@ end
 envData.xs = [envData.xs, odomData];
 envData.fs = [envData.fs, fm];
 
+
+function f = startCallback(src, msg)
+global startCmd
+
+if msg.Data
+    startCmd = 1;
+    disp('Adaptive Sampling Enabled');
+else
+    startCmd = [];
+    disp('Adaptive Sampling Disabled');
+end
 
 function G = draw_path(xs, z, c, lw, ms)
 

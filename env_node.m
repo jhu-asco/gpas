@@ -10,6 +10,8 @@ function S = env_node(S)
 %
 
 rosshutdown
+setenv('ROS_MASTER_URI','http://172.16.177.182:11311')
+setenv('ROS_IP','172.16.177.1')
 rosinit
 
 if ~isfield(S, 'envFile')
@@ -42,7 +44,7 @@ S.envMsg = rosmessage(S.envPub)
 
 
 % subscriber 
-odomSub = rossubscriber('/odom', rostype.nav_msgs_Odometry, {@odomCallback, S})
+odomSub = rossubscriber('/odometry/filtered', rostype.nav_msgs_Odometry, {@odomCallback, S}, 'BufferSize', 100)
 
 disp('waiting for odoms...')
 while(1)
@@ -59,6 +61,6 @@ S.envMsg.Temperature_ = env_scalar2d(x, S);
 send(S.envPub, S.envMsg);
 
 disp(['odomCallback: sent data=' num2str(S.envMsg.Temperature_)...
-      ' at p=(' num2str(x(1)) ',' num2str(x(2))]);
+      ' at p=(' num2str(x(1)) ',' num2str(x(2)) ')']);
 
 
