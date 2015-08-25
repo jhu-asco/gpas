@@ -10,8 +10,8 @@ function S = env_node(S)
 %
 
 rosshutdown
-setenv('ROS_MASTER_URI','http://172.16.177.182:11311')
-setenv('ROS_IP','172.16.177.1')
+setenv('ROS_MASTER_URI','http://192.168.1.71:11311')
+setenv('ROS_IP','192.168.1.10')
 rosinit
 
 if ~isfield(S, 'envFile')
@@ -44,7 +44,7 @@ S.envMsg = rosmessage(S.envPub)
 
 
 % subscriber 
-odomSub = rossubscriber('/odometry/filtered', rostype.nav_msgs_Odometry, {@odomCallback, S}, 'BufferSize', 100)
+odomSub = rossubscriber('/insekf/pose', rostype.nav_msgs_Odometry, {@odomCallback, S}, 'BufferSize', 100)
 
 disp('waiting for odoms...')
 while(1)

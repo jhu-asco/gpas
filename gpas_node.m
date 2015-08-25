@@ -150,6 +150,12 @@ else
 end
 
 
+
+% obstacle map
+if ~isfield(opt, 'devBias')
+  opt.devBias = .001;
+end
+
 % use one or separate figures?
 if 0
 opt.figs(1) = figure;
@@ -190,11 +196,11 @@ envData.fs = [];
 
 % setup ROS node
 rosshutdown
-setenv('ROS_MASTER_URI','http://172.16.177.182:11311')
-setenv('ROS_IP','172.16.177.1')
+setenv('ROS_MASTER_URI','http://192.168.1.71:11311')
+setenv('ROS_IP','192.168.1.10')
 rosinit
 
-odomSub = rossubscriber('/odometry/filtered', rostype.nav_msgs_Odometry, ...
+odomSub = rossubscriber('/insekf/pose', rostype.nav_msgs_Odometry, ...
                         @odomCallback)
 
 % wait for valid odom data
@@ -220,6 +226,10 @@ end
 
 cmdPub = rospublisher('/adp_path', rostype.nav_msgs_Path)
 cmdMsg = rosmessage(cmdPub)
+
+cmdPub_rviz = rospublisher('/adp_path_rviz', rostype.geometry_msgs_PoseStamped)
+cmdMsg_rviz = rosmessage(cmdPub_rviz)
+
 
 
 % if this is simulated (i.e. from a file) then display the true
@@ -271,6 +281,7 @@ c = traj_cost(z, opt)
 
 xs = traj(z, opt);
 
+opt.ce.z = z;
 opt.ce.C = opt.ce.C0;
 opt.ce.lb = zlb;
 opt.ce.ub = zub;
@@ -314,6 +325,7 @@ for k=1:opt.stages
   z = opt.ce.z0;
 
   for i=1:opt.iters
+    opt.z = z; 
     [z, c, mu, C] = cem(@traj_cost, z, opt.ce, opt);
     opt.ce.C = C;
     xs = traj(z,opt);
@@ -340,11 +352,26 @@ for k=1:opt.stages
   cmdMsg.Poses(2).Pose.Orientation.Z = xd(3); % this is the angle
 
   send(cmdPub, cmdMsg);
-
-  % wait for env data
-  while isempty(envData.xs)
+  
+  %publish another message for rviz visualization
+  cmdMsg_rviz.Pose.Position.X = xd(1);
+  cmdMsg_rviz.Pose.Position.Y = xd(2);
+  cmdMsg_rviz.Pose.Orientation.Z = xd(3);
+  cmdMsg_rviz.Header.FrameId = 'map';
+  
+  send(cmdPub_rviz,cmdMsg_rviz);
+    
+  while(1)
+    % wait for env data
+    while isempty(envData.xs)
+       pause(.1)
+    end
+    if norm(opt.xi(1:2)-odomData(1:2)) > 1 
+       break
+    end
     pause(.1)
   end
+  
   
   ts = [ts, ts(end) + opt.dt];
   ys = [ys, envData.fs(end)];
@@ -533,6 +560,9 @@ vs = sqrt(diag(ss));
 %ps = ones(size(ps));
 
 f = -sum(ms + 1.96*vs);
+
+f = f + opt.devBias*norm(opt.z-z);
+
 
 %f = sum(ps.*(ms));
 %f = -sum(ps.*vs);
