@@ -1,4 +1,4 @@
-function f = srec_node(opt)
+function f = gpas_node(opt)
 % Adaptive Sampling for discovering peak concentration in a 2d scalar field
 %
 % Author: Marin Kobilarov, marin(at)jhu.edu 
@@ -196,8 +196,15 @@ envData.fs = [];
 
 % setup ROS node
 rosshutdown
-setenv('ROS_MASTER_URI','http://192.168.1.71:11311')
-setenv('ROS_IP','192.168.1.10')
+
+if isfield(opt, 'ROS_MASTER_URI')
+  setenv('ROS_MASTER_URI', opt.ROS_MASTER_URI)
+end
+
+if isfield(opt, 'ROS_IP')
+  setenv('ROS_IP', opt.ROS_IP)
+end
+
 rosinit
 
 odomSub = rossubscriber('/insekf/pose', rostype.nav_msgs_Odometry, ...
@@ -275,6 +282,7 @@ zlb = repmat([opt.vlb; opt.wlb], opt.sn,1);
 zub = repmat([opt.vub; opt.wub], opt.sn,1);
 
 xs = traj(z, opt)
+opt.z = z;
 c = traj_cost(z, opt)
 
 %[z,fval,exitflag,output] = fmincon(@(z)traj_cost(z,opt), z, [], [],[],[],zlb,zub);
@@ -325,7 +333,7 @@ for k=1:opt.stages
   z = opt.ce.z0;
 
   for i=1:opt.iters
-    opt.z = z; 
+    opt.ce.z = z; 
     [z, c, mu, C] = cem(@traj_cost, z, opt.ce, opt);
     opt.ce.C = C;
     xs = traj(z,opt);
@@ -562,7 +570,6 @@ vs = sqrt(diag(ss));
 f = -sum(ms + 1.96*vs);
 
 f = f + opt.devBias*norm(opt.z-z);
-
 
 %f = sum(ps.*(ms));
 %f = -sum(ps.*vs);

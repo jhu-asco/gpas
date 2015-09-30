@@ -10,9 +10,14 @@ function S = env_node(S)
 %
 
 rosshutdown
-setenv('ROS_MASTER_URI','http://192.168.1.71:11311')
-setenv('ROS_IP','192.168.1.10')
-rosinit
+
+if isfield(S, 'ROS_MASTER_URI')
+  setenv('ROS_MASTER_URI', S.ROS_MASTER_URI)
+end
+
+if isfield(S, 'ROS_IP')
+  setenv('ROS_IP', S.ROS_IP)
+end
 
 if ~isfield(S, 'envFile')
   S.envFile = 'data/do1.ppm';
@@ -33,6 +38,9 @@ end
 if ~isfield(S, 'sigma')
   S.sigma = 0;
 end
+
+rosinit
+
 
 % scalar field over 2d domain loaded from a file
 S.I = S.scale*double(imread(S.envFile))/255;
