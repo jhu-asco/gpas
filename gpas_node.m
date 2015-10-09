@@ -354,10 +354,16 @@ for k=1:opt.stages
   
   % "EXECUTE" START OF PATH
   xd = xs(:,2);
+  m = rosmessage(rostype.geometry_msgs_PoseStamped);
+  m.Pose.Position.X = xd(1);
+  m.Pose.Position.Y = xd(2);
+  m.Pose.Orientation.Z = xd(3);
   % send command 
-  cmdMsg.Poses(2).Pose.Position.X = xd(1);
-  cmdMsg.Poses(2).Pose.Position.Y = xd(2);
-  cmdMsg.Poses(2).Pose.Orientation.Z = xd(3); % this is the angle
+  cmdMsg.Poses(1) = m;
+  cmdMsg.Poses(2) = m;
+  %cmdMsg.Poses(2).Pose.Position.X = xd(1);
+  %cmdMsg.Poses(2).Pose.Position.Y = xd(2);
+  %cmdMsg.Poses(2).Pose.Orientation.Z = xd(3); % this is the angle
 
   send(cmdPub, cmdMsg);
   
