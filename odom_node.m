@@ -45,7 +45,7 @@ end
 function f = cmdCallback(src, msg, S)
 
 % take the next pose along path
-S.odomMsg.Pose.Pose = msg.Poses(2).Pose;
+S.odomMsg.Pose.Pose = msg.Poses(1).Pose;
 send(S.odomPub, S.odomMsg)
 
 x = [S.odomMsg.Pose.Pose.Position.X;

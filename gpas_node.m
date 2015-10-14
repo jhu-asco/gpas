@@ -353,17 +353,16 @@ for k=1:opt.stages
   
   
   % "EXECUTE" START OF PATH
-  xd = xs(:,2);
-  m = rosmessage(rostype.geometry_msgs_PoseStamped);
-  m.Pose.Position.X = xd(1);
-  m.Pose.Position.Y = xd(2);
-  m.Pose.Orientation.Z = xd(3);
-  % send command 
-  cmdMsg.Poses(1) = m;
-  cmdMsg.Poses(2) = m;
-  %cmdMsg.Poses(2).Pose.Position.X = xd(1);
-  %cmdMsg.Poses(2).Pose.Position.Y = xd(2);
-  %cmdMsg.Poses(2).Pose.Orientation.Z = xd(3); % this is the angle
+  % broadcast all the points in the planned path
+  for i_p=2:size(xs,2) %start from the second point, as first point is current location.
+    xd = xs(:,i_p);
+    m = rosmessage(rostype.geometry_msgs_PoseStamped);
+    m.Pose.Position.X = xd(1);
+    m.Pose.Position.Y = xd(2);
+    m.Pose.Orientation.Z = xd(3);
+    % send command 
+    cmdMsg.Poses(i_p-1) = m;
+  end
 
   send(cmdPub, cmdMsg);
   
