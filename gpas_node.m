@@ -668,6 +668,7 @@ if ~isempty(opt.fs)
     h = contour(opt.xr, opt.yr, reshape(opt.fs, length(opt.xr), ...
                                         length(opt.yr)));
     hold on
+    colorbar;
     plot(opt.fgp.xs(1,:), opt.fgp.xs(2,:), '-g','LineWidth',2); 
   else
     h = surfc(opt.xr, opt.yr, reshape(opt.fs, length(opt.xr), length(opt.yr)),...
@@ -678,7 +679,7 @@ if ~isempty(opt.fs)
   end
 
   axis tight
-%  axis equal
+  axis equal
   %  plot(gp.xss, gp.J, 'b')
   hold on
 end
@@ -699,6 +700,7 @@ if cns
   h = contour(opt.xr, opt.yr, reshape(ms, length(opt.xr), ...
                                       length(opt.yr)));
   hold on
+  colorbar;
   plot(opt.fgp.xs(1,:), opt.fgp.xs(2,:), 'ok-'); 
 else
   h = surf(opt.xr, opt.yr, reshape(ms, length(opt.xr), length(opt.yr)), ...
@@ -713,7 +715,7 @@ else
 end
 
 axis tight
-%axis equal
+axis equal
 xlabel('m')
 ylabel('m')
 title('Estimated Field')
